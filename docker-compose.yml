@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      SECURITY_USERNAME: ${SECURITY_USERNAME}
+      SECURITY_PASSWORD: ${SECURITY_PASSWORD}
+      DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      MYSQL_CONNECTION_LIMIT: ${MYSQL_CONNECTION_LIMIT:-5}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.gsc-indexer.rule=Host(`index.servidor.wiki.br`)
+      - traefik.http.routers.gsc-indexer.entrypoints=web,websecure
+      - traefik.http.routers.gsc-indexer.tls=true
+      - traefik.http.routers.gsc-indexer.tls.certresolver=mytlschallenge
+      - traefik.http.services.gsc-indexer.loadbalancer.server.port=3000
+      - traefik.docker.network=n8n_default
+    networks:
+      - internal
+      - proxy
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD} --silent
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+volumes:
+  mysql_data:
+
+networks:
+  internal:
+  proxy:
+    external: true
+    name: n8n_default

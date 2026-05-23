@@ -1,0 +1,11 @@
+node_modules
+dist
+tmp
+.env
+.env.*
+!.env.example
+data_config.json
+data_batches.json
+*.log
+.git
+.gitignore

@@ -37,7 +37,7 @@ export default function App() {
   const [authChecking, setAuthChecking] = useState(true);
 
   // App & config states
-  const [isSimulated, setIsSimulated] = useState(true);
+  const [isSimulated, setIsSimulated] = useState(false);
   const [siteUrl, setSiteUrl] = useState('');
   const [propertyStrategy, setPropertyStrategy] = useState('domain');
   const [clientEmail, setClientEmail] = useState('');
@@ -67,6 +67,23 @@ export default function App() {
     setSystemLogs(prev => [...prev.slice(-30), `[${timestamp}] ${msg}`]);
   };
 
+  const clearAuthSession = () => {
+    localStorage.removeItem('gsc_session_token');
+    localStorage.removeItem('gsc_session_user');
+    setToken(null);
+    setCurrentUser(null);
+    setBatches([]);
+    setSelectedBatchId(null);
+  };
+
+  const fetchAuthorized = (url: string, options: RequestInit = {}) => {
+    const headers = new Headers(options.headers || {});
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return fetchWithRetry(url, { ...options, headers }, 5, 1000);
+  };
+
   // Load auth session on mount
   useEffect(() => {
     try {
@@ -87,7 +104,11 @@ export default function App() {
   // Sync / fetch active operational GSC config metadata
   const fetchGscConfig = async () => {
     try {
-      const response = await fetchWithRetry('/api/config', {}, 5, 1000);
+      const response = await fetchAuthorized('/api/config');
+      if (response.status === 401) {
+        clearAuthSession();
+        return;
+      }
       const data = await response.json();
       if (data.success) {
         setIsSimulated(data.mode === 'simulated');
@@ -147,7 +168,11 @@ export default function App() {
   const fetchBatches = async (setLoader = false) => {
     if (setLoader) setLoadingBatches(true);
     try {
-      const response = await fetchWithRetry('/api/batches', {}, 5, 1000);
+      const response = await fetchAuthorized('/api/batches');
+      if (response.status === 401) {
+        clearAuthSession();
+        return;
+      }
       const data = await response.json();
       if (data.success) {
         const list: BatchCheckJob[] = data.batches;
@@ -456,10 +481,7 @@ ${bodyRows}
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('gsc_session_token');
-    localStorage.removeItem('gsc_session_user');
-    setToken(null);
-    setCurrentUser(null);
+    clearAuthSession();
   };
 
   // Render auth guard

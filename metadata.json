@@ -1,6 +1,6 @@
 {
-  "name": "Monitor de Indexação GSC",
-  "description": "Verificação em lote de indexação de URLs com o Google Search Console, login de segurança e exportação para CSV.",
+  "name": "Painel Privado de Auditoria GSC",
+  "description": "Painel privado para auditoria interna de indexacao no Google Search Console.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

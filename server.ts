@@ -1031,7 +1031,7 @@ async function startServer() {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`[GSC Monitor Service] Rodando na porta ${PORT}`);
     console.log(`[GSC Monitor Service] Endereço local: http://localhost:${PORT}`);
-    console.log(`[GSC Monitor API Login] Usuário: ${APP_USER} | Senha: ${APP_PASSWORD}`);
+    console.log(`[GSC Monitor API Login] Usuário configurado: ${APP_USER}`);
   });
 }
 

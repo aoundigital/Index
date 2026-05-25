@@ -26,7 +26,7 @@ async function fetchWithRetry(
 
 export default function LoginModal({ onLoginSuccess }: LoginModalProps) {
   const [username, setUsername] = useState('admin@empresa.com');
-  const [password, setPassword] = useState('gsc-secure-2026');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -248,14 +248,13 @@ export default function LoginModal({ onLoginSuccess }: LoginModalProps) {
         {serverAuthDetails?.isUsingDefaultCredentials && (
           <div className="mt-8 pt-6 border-t border-slate-700/50">
             <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 p-4 text-xs text-blue-300 space-y-1">
-              <p className="font-semibold text-blue-200">ℹ️ Acesso de Demonstração / Padrão Ativo:</p>
-              <p>O servidor está configurado com as credenciais padrão de segurança de fábrica:</p>
+              <p className="font-semibold text-blue-200">Credenciais padrão ativas</p>
+              <p>Altere as variáveis de ambiente antes de usar em produção.</p>
               <div className="mt-2 bg-slate-900/90 p-2 rounded font-mono text-slate-400 leading-relaxed overflow-x-auto text-[10px] space-y-0.5">
                 <div><span className="text-blue-400">Usuário:</span> {serverAuthDetails?.user || 'admin@empresa.com'}</div>
-                <div><span className="text-blue-400">Senha:</span> gsc-secure-2026</div>
               </div>
               <p className="pt-2 text-[10px] text-slate-400 italic">
-                Para alterar estas credenciais no Cloud Run, defina as variáveis de ambiente <code className="text-slate-300">SECURITY_USERNAME</code> e <code className="text-slate-300">SECURITY_PASSWORD</code>.
+                Defina <code className="text-slate-300">SECURITY_USERNAME</code> e <code className="text-slate-300">SECURITY_PASSWORD</code> no ambiente do servidor.
               </p>
             </div>
           </div>

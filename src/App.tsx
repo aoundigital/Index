@@ -3,7 +3,7 @@ import {
   Lock, CheckCircle2, AlertTriangle, HelpCircle, 
   Layers, LogOut, Settings, PlusCircle, RefreshCw, 
   Search, Download, Trash2, Ban, ShieldAlert, Clipboard,
-  Terminal, Globe, ExternalLink, Activity, Info, StopCircle
+  Terminal, Globe, ExternalLink, Activity, Info, StopCircle, Eye, EyeOff
 } from 'lucide-react';
 import LoginModal from './components/LoginModal';
 import GscSettings from './components/GscSettings';
@@ -58,6 +58,7 @@ export default function App() {
   // Interactive Live logs list
   const [systemLogs, setSystemLogs] = useState<string[]>([]);
   const [showSystemLogs, setShowSystemLogs] = useState(false);
+  const [showResultsTable, setShowResultsTable] = useState(true);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Helpers to append to live simulated UI logs
@@ -792,6 +793,15 @@ ${bodyRows}
                   </button>
                 </div>
 
+                <button
+                  type="button"
+                  onClick={() => setShowResultsTable((value) => !value)}
+                  className="h-8 px-3 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg border border-slate-250 transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {showResultsTable ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <span>{showResultsTable ? 'Ocultar tabela' : 'Mostrar tabela'}</span>
+                </button>
+
               </div>
 
             </div>
@@ -815,19 +825,31 @@ ${bodyRows}
             )}
 
             {/* DATA SHEET SPREADSHEET TABULAR */}
-            <div className="overflow-x-auto min-h-[300px]">
+            <div className="overflow-x-auto min-h-[260px]">
               {activeBatch ? (
-                filteredResults.length > 0 ? (
-                  <table className="w-full text-left border-collapse">
+                !showResultsTable ? (
+                  <div className="p-10 text-center text-slate-500 font-sans space-y-3">
+                    <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center mx-auto text-slate-400">
+                      <EyeOff className="w-5 h-5" />
+                    </div>
+                    <p className="font-semibold text-slate-700 text-sm">Tabela de resultados oculta.</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowResultsTable(true)}
+                      className="h-9 px-3 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg transition inline-flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>Mostrar tabela</span>
+                    </button>
+                  </div>
+                ) : filteredResults.length > 0 ? (
+                  <table className="w-full min-w-[760px] text-left border-collapse">
                     <thead className="bg-slate-100/80 border-b border-slate-205">
                       <tr>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600">URL Alvo</th>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 text-center">Crawler (Robô)</th>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600">Estado de Cobertura</th>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600">Propriedade GSC</th>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 text-center">Último Rastreio</th>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 text-center">Indexação / Status</th>
-                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 text-right">Diretiva HTML / Robots</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 w-[34%]">URL Alvo</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 w-[30%]">Estado de Cobertura</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 w-[24%]">Propriedade GSC</th>
+                        <th className="px-5 py-3.5 text-xs font-semibold text-slate-600 text-center w-[12%]">Indexação / Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-150 bg-white">
@@ -866,19 +888,6 @@ ${bodyRows}
                               </div>
                             </td>
 
-                            {/* Crawled user agent */}
-                            <td className="px-5 py-4 text-center">
-                              {item.status !== 'pending' && item.status !== 'checking' ? (
-                                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-sm ${
-                                  item.googleBotMobile ? 'bg-cyan-50 text-cyan-800 border border-cyan-150' : 'bg-slate-100 text-slate-700'
-                                }`}>
-                                  {item.googleBotMobile ? 'Smart_Mobile' : 'Desktop_Agent'}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 font-mono text-[10px]">-</span>
-                              )}
-                            </td>
-
                             {/* Coverage detail tag explanation */}
                             <td className="px-5 py-4 text-xs">
                               {item.status === 'checking' ? (
@@ -905,22 +914,6 @@ ${bodyRows}
                               </span>
                             </td>
 
-                            {/* Last Crawl time in Brasil formatting */}
-                            <td className="px-5 py-4 text-xs text-center text-slate-600">
-                              {item.lastCrawlTime ? (
-                                <div className="space-y-0.5">
-                                  <span className="font-medium text-slate-800">
-                                    {new Date(item.lastCrawlTime).toLocaleDateString('pt-BR')}
-                                  </span>
-                                  <p className="text-[10px] text-slate-400 block font-mono">
-                                    {new Date(item.lastCrawlTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                  </p>
-                                </div>
-                              ) : (
-                                <span className="text-slate-400 italic font-mono text-[11px]">Nunca</span>
-                              )}
-                            </td>
-
                             {/* INDEX VERDICT BADGE STATUS */}
                             <td className="px-5 py-4 text-center">
                               <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full uppercase shrink-0 ${
@@ -940,19 +933,6 @@ ${bodyRows}
                                 {item.status === 'pending' && 'Pendente'}
                                 {item.status === 'error' && 'Falha GSC'}
                               </span>
-                            </td>
-
-                            {/* Robots directive status */}
-                            <td className="px-5 py-4 text-right">
-                              {item.status !== 'pending' && item.status !== 'checking' ? (
-                                <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-sm ${
-                                  item.robotsTxtState === 'PERMITIDO' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-                                }`}>
-                                  {formatGscLabel(item.robotsTxtState || 'DESCONHECIDO')}
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 font-mono text-[10px]">-</span>
-                              )}
                             </td>
 
                           </tr>

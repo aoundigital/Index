@@ -57,6 +57,7 @@ export default function App() {
 
   // Interactive Live logs list
   const [systemLogs, setSystemLogs] = useState<string[]>([]);
+  const [showSystemLogs, setShowSystemLogs] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
   // Helpers to append to live simulated UI logs
@@ -136,10 +137,10 @@ export default function App() {
 
   // Auto-scroll logs panel when updated
   useEffect(() => {
-    if (logsEndRef.current) {
+    if (showSystemLogs && logsEndRef.current) {
       logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [systemLogs]);
+  }, [systemLogs, showSystemLogs]);
 
   // Fetch batches database
   const fetchBatches = async (setLoader = false) => {
@@ -611,19 +612,89 @@ ${bodyRows}
 
         {/* STATS SUMMARY BAR */}
         {activeBatch && (
-          <div className="mb-1 pointer-events-none">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Métricas do lote selecionado: <span className="text-indigo-650 font-bold">{activeBatch.name}</span>
+          <div className="mb-1 space-y-3">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Métricas do lote selecionado: <span className="text-indigo-650 font-bold">{activeBatch.name}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  id="export-csv-btn"
+                  onClick={handleExportCsv}
+                  disabled={!activeBatch || activeBatch.results.length === 0}
+                  className="h-9 px-3 bg-slate-900 hover:bg-black disabled:bg-slate-300 text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Baixar CSV</span>
+                </button>
+                <button
+                  id="copy-html-table-btn"
+                  onClick={handleCopyHtmlTable}
+                  disabled={!activeBatch || activeBatch.results.length === 0}
+                  className="h-9 px-3 bg-white hover:bg-slate-50 disabled:bg-slate-100 text-slate-800 disabled:text-slate-400 text-xs font-bold rounded-lg border border-slate-250 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <Clipboard className="w-4 h-4" />
+                  <span>Copiar HTML</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSystemLogs((value) => !value)}
+                  className={`h-9 px-3 text-xs font-bold rounded-lg border transition flex items-center justify-center gap-2 cursor-pointer ${
+                    showSystemLogs
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : 'bg-white text-slate-700 border-slate-250 hover:bg-slate-50'
+                  }`}
+                >
+                  <Terminal className="w-4 h-4" />
+                  <span>{showSystemLogs ? 'Ocultar logs' : 'Ver logs'}</span>
+                </button>
+                {batches.length > 0 && (
+                  <button
+                    onClick={clearAllHistory}
+                    className="h-9 px-3 text-slate-500 hover:text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-lg border border-slate-200 hover:border-rose-100 transition flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Limpar histórico</span>
+                  </button>
+                )}
+              </div>
             </div>
             <StatsCards results={activeBatch.results} />
           </div>
         )}
 
-        {/* ROW 2: MAIN SPREADSHEET (BENTO SPAN 8) AND ACTIONS/LOGS (BENTO SPAN 4) */}
+        {showSystemLogs && (
+          <div className="bg-slate-900 rounded-2xl p-4 text-white shadow-lg w-full">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-emerald-400" />
+                <span>Logs de Rede do Sistema</span>
+              </h4>
+              <div className="flex gap-1.5 items-center">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">Live Feed</span>
+              </div>
+            </div>
+            <div className="max-h-40 overflow-y-auto font-mono text-[10px] space-y-2 pr-1 leading-relaxed text-slate-350">
+              {systemLogs.map((log, idx) => (
+                <p key={idx} className={
+                  log.includes('GSC API Ativa') || log.includes('PRODUÇÃO') ? 'text-emerald-300' :
+                  log.includes('Simulado') || log.includes('SANDBOX') ? 'text-amber-300' :
+                  log.includes('Progresso') ? 'text-blue-300' : 'text-slate-350'
+                }>
+                  {log}
+                </p>
+              ))}
+              <div ref={logsEndRef} />
+            </div>
+          </div>
+        )}
+
+        {/* ROW 2: MAIN SPREADSHEET */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
           
-          {/* spreadsheet / table details (xl:col-span-9) */}
-          <div className="xl:col-span-9 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+          {/* spreadsheet / table details */}
+          <div className="xl:col-span-12 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
             
             {/* Header filters */}
             <div className="p-5 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/60">
@@ -915,88 +986,6 @@ ${bodyRows}
                 <span className="hidden sm:inline italic">Atualizações em andamento automático via background</span>
               </div>
             )}
-
-          </div>
-
-          {/* BENTO ACTIONS & DETAILED LOGS PANEL (xl:col-span-3) */}
-          <div className="xl:col-span-3 lg:grid lg:grid-cols-2 xl:flex xl:flex-col gap-5">
-            
-            {/* Download and administration triggers */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col items-center text-center shadow-xs w-full">
-              <div className="w-14 h-14 bg-indigo-50 rounded-full flex items-center justify-center mb-3 border border-indigo-100 text-indigo-650">
-                <Download className="w-6 h-6" />
-              </div>
-              <h4 className="font-bold text-slate-850 text-sm mb-1">Exportação Integrada</h4>
-              <p className="text-xs text-slate-450 leading-relaxed mb-4">
-                Baixe a planilha de resultados em tempo real compatível com Microsoft Excel e Google Sheets.
-              </p>
-              
-              <div className="space-y-2.5 w-full">
-                <button
-                  id="export-csv-btn"
-                  onClick={handleExportCsv}
-                  disabled={!activeBatch || activeBatch.results.length === 0}
-                  className="w-full py-2.5 bg-slate-900 hover:bg-black disabled:bg-slate-300 text-white text-xs font-bold rounded-lg shadow-xs hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Baixar Planilha .CSV</span>
-                </button>
-
-                <button
-                  id="copy-html-table-btn"
-                  onClick={handleCopyHtmlTable}
-                  disabled={!activeBatch || activeBatch.results.length === 0}
-                  className="w-full py-2.5 bg-white hover:bg-slate-50 disabled:bg-slate-100 text-slate-800 disabled:text-slate-400 text-xs font-bold rounded-lg border border-slate-250 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <Clipboard className="w-4 h-4" />
-                  <span>Copiar Tabela HTML</span>
-                </button>
-
-                {batches.length > 0 && (
-                  <button
-                    onClick={clearAllHistory}
-                    className="w-full py-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-lg border border-transparent hover:border-rose-100 transition flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Excluir Todo Histórico</span>
-                  </button>
-                )}
-              </div>
-
-            </div>
-
-            {/* LIVE CONSOLE LOGS MONITOR TRACKER */}
-            <div className="bg-slate-900 rounded-2xl p-5 text-white flex flex-col shadow-lg w-full">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-emerald-400" />
-                  <span>Logs de Rede do Sistema</span>
-                </h4>
-                <div className="flex gap-1.5 items-center">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[9px] font-mono text-emerald-400 uppercase font-semibold">Live Feed</span>
-                </div>
-              </div>
-
-              {/* Console log list output */}
-              <div className="h-44 overflow-y-auto font-mono text-[10px] space-y-2 pr-1 leading-relaxed text-slate-350">
-                {systemLogs.map((log, idx) => (
-                  <p key={idx} className={
-                    log.includes('GSC API Ativa') || log.includes('PRODUÇÃO') ? 'text-emerald-300' :
-                    log.includes('Simulado') || log.includes('SANDBOX') ? 'text-amber-300' :
-                    log.includes('Progresso') ? 'text-blue-300' : 'text-slate-350'
-                  }>
-                    {log}
-                  </p>
-                ))}
-                <div ref={logsEndRef} />
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between text-[9px] text-slate-500 font-semibold font-mono">
-                <span>CONTRASENHA: ATIVA</span>
-                <span>REG: CLOUD RUN</span>
-              </div>
-            </div>
 
           </div>
 
